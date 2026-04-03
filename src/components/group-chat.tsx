@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   collection, addDoc, onSnapshot, query,
   orderBy, serverTimestamp, Timestamp, doc,
-  updateDoc, arrayUnion, setDoc, deleteDoc, where,
+  updateDoc, arrayUnion, setDoc, deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
