@@ -1,42 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
-
-const ai = genkit({ plugins: [googleAI()] });
 
 export async function POST(req: NextRequest) {
   try {
     const { messages, context } = await req.json();
 
-    const systemPrompt = `You are an expert programming tutor and doubt-clearing assistant for Edu Portal. 
-Your role is to help students understand programming concepts, debug code, and clarify doubts.
-${context ? `The student is currently studying: ${context}` : ''}
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'API key not configured.' }, { status: 500 });
+    }
 
+    const systemInstruction = `You are an expert programming tutor and doubt-clearing assistant for Edu Portal.
+Your role is to help students understand programming concepts, debug code, and clarify doubts.
+${context ? `The student is currently studying: ${context}.` : ''}
 Guidelines:
-- Give clear, concise explanations with examples
-- When explaining code, use proper code blocks
+- Give clear, concise explanations with practical examples
+- Use code blocks with triple backticks for code examples
 - Break down complex concepts into simple steps
 - Be encouraging and supportive
-- If asked about code bugs, explain what's wrong and how to fix it
 - Keep responses focused and practical`;
 
-    const history = messages.slice(0, -1).map((m: any) => ({
-      role: m.role,
-      content: [{ text: m.content }],
+    // Build Gemini contents array
+    const contents = messages.map((m: any) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }],
     }));
 
-    const lastMessage = messages[messages.length - 1].content;
+    const body = {
+      system_instruction: { parts: [{ text: systemInstruction }] },
+      contents,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+      },
+    };
 
-    const { text } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      system: systemPrompt,
-      messages: history,
-      prompt: lastMessage,
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
 
-    return NextResponse.json({ reply: text });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Gemini API error:', err);
+      return NextResponse.json({ error: 'Gemini API error.' }, { status: 500 });
+    }
+
+    const data = await res.json();
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!reply) {
+      return NextResponse.json({ error: 'No response from AI.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ reply });
   } catch (err) {
     console.error('AI chat error:', err);
-    return NextResponse.json({ error: 'Failed to get AI response.' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error.' }, { status: 500 });
   }
 }
