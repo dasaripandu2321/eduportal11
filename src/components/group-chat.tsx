@@ -156,8 +156,11 @@ export function GroupChat() {
         createdAt: serverTimestamp(),
         replies: [],
       });
-    } catch {
+      setConnected(true);
+    } catch (err) {
+      console.error('Send failed:', err);
       setText(msg); // restore on failure
+      setConnected(false);
     }
     inputRef.current?.focus();
   };
@@ -227,6 +230,14 @@ export function GroupChat() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Connection error banner ── */}
+      {!connected && (
+        <div className="mx-3 mt-2 px-3 py-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-600 dark:text-red-400 flex items-center gap-2 shrink-0">
+          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+          <span>Chat disconnected — check Firestore rules in Firebase Console (allow read, write: if true)</span>
         </div>
       )}
 
