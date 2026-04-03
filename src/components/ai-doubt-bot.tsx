@@ -135,10 +135,10 @@ export function AIDoubtBot() {
       if (data.reply) {
         setMessages(prev => [...prev, { role: 'model', content: data.reply }]);
       } else {
-        setMessages(prev => [...prev, { role: 'model', content: 'Sorry, I could not get a response. Please try again.' }]);
+        setMessages(prev => [...prev, { role: 'model', content: `Error: ${data.error || 'No response'}` }]);
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'model', content: 'Connection error. Please check your internet and try again.' }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: 'model', content: `Connection error: ${err.message}` }]);
     } finally {
       setLoading(false);
     }
