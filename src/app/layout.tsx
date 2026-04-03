@@ -11,6 +11,11 @@ import { AIDoubtBot } from '@/components/ai-doubt-bot';
 export const metadata: Metadata = {
   title: 'Edu Portal',
   description: 'Explore technology domains, discover career paths, and accelerate your tech journey with AI-powered tools.',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
